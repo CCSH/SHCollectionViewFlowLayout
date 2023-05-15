@@ -1,7 +1,7 @@
 Pod::Spec.new do | s |
     s.name = "SHCollectionViewFlowLayout"
     s.version = "1.1.0"
-    s.summary = "UICollectionView 对齐布局（左、右、居中）"
+    s.summary = "UICollectionView 水平布局（默认、左、右、居中）"
     s.homepage = "https://github.com/CCSH/#{s.name}"
     s.license = "MIT"
     s.author = {"CCSH" => "624089195@qq.com"}
