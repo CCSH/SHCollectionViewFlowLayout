@@ -8,10 +8,13 @@
 
 #import "SHCollectionViewFlowLayout.h"
 
-@interface SHCollectionViewFlowLayout () {
+@interface SHCollectionViewFlowLayout ()<UICollectionViewDelegateFlowLayout>
+{
     //在居中对齐的时候需要知道这行所有cell的宽度总和
     CGFloat _sumWidth;
 }
+
+@property (nonatomic, weak) SHCollectionViewFlowLayout *delegate;
 
 @end
 
@@ -20,6 +23,8 @@
 - (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
     NSArray *layoutAttributes_t = [super layoutAttributesForElementsInRect:rect];
     NSArray *layoutAttributes = [[NSArray alloc] initWithArray:layoutAttributes_t copyItems:YES];
+    
+    self.delegate = (SHCollectionViewFlowLayout *)self.collectionView.delegate;
 
     NSMutableArray *temp = [[NSMutableArray alloc] init];
     for (NSUInteger index = 0; index < layoutAttributes.count; index++) {
@@ -56,36 +61,50 @@
 }
 
 //调整属于同一行的cell的位置frame
-- (void)handleCellFrame:(NSMutableArray *)temp {
+- (void)handleCellFrame:(NSMutableArray <UICollectionViewLayoutAttributes *>*)temp {
     __block CGFloat width = 0.0;
+    __block UIEdgeInsets sectionInset = UIEdgeInsetsZero;
+    __block CGFloat minimumInteritemSpacing = 0;
+    if([self.delegate respondsToSelector:@selector(collectionView:layout:insetForSectionAtIndex:)]){
+        sectionInset = [self.delegate collectionView:self.collectionView layout:self insetForSectionAtIndex:temp.firstObject.indexPath.section];
+    }else{
+        sectionInset = self.sectionInset;
+    }
+    if([self.collectionView.delegate respondsToSelector:@selector(collectionView:layout:minimumInteritemSpacingForSectionAtIndex:)]){
+        minimumInteritemSpacing = [self.delegate collectionView:self.collectionView layout:self minimumInteritemSpacingForSectionAtIndex:temp.firstObject.indexPath.section];
+    }else{
+        minimumInteritemSpacing = self.minimumInteritemSpacing;
+    }
     switch (self.alignment) {
         case SHLayoutAlignment_right: {
-            width = self.collectionView.frame.size.width - self.sectionInset.right;
+            width = self.collectionView.frame.size.width - sectionInset.right;
             [temp enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(UICollectionViewLayoutAttributes *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 CGRect frame = obj.frame;
                 frame.origin.x = width - frame.size.width;
                 obj.frame = frame;
-                width = width - frame.size.width - self.minimumInteritemSpacing;
+                width -= (frame.size.width + minimumInteritemSpacing);
             }];
         } break;
         case SHLayoutAlignment_center: {
-            width = (self.collectionView.frame.size.width - _sumWidth - ((temp.count - 1) * self.minimumInteritemSpacing)) / 2;
+            width = (self.collectionView.frame.size.width - _sumWidth - ((temp.count - 1) * minimumInteritemSpacing)) / 2;
             [temp enumerateObjectsUsingBlock:^(UICollectionViewLayoutAttributes *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 CGRect frame = obj.frame;
                 frame.origin.x = width;
                 obj.frame = frame;
-                width += frame.size.width + self.minimumInteritemSpacing;
+                width += frame.size.width + minimumInteritemSpacing;
             }];
         } break;
-        default: {
-            width = self.sectionInset.left;
+        case SHLayoutAlignment_left: {
+            width = sectionInset.left;
             [temp enumerateObjectsUsingBlock:^(UICollectionViewLayoutAttributes *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 CGRect frame = obj.frame;
                 frame.origin.x = width;
                 obj.frame = frame;
-                width += frame.size.width + self.minimumInteritemSpacing;
+                width += frame.size.width + minimumInteritemSpacing;
             }];
         } break;
+        default:
+            break;
     }
     _sumWidth = 0.0;
     [temp removeAllObjects];
