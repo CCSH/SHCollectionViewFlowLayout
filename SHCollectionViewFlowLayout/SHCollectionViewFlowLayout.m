@@ -12,9 +12,8 @@
 {
     //在居中对齐的时候需要知道这行所有cell的宽度总和
     CGFloat _sumWidth;
+    SHCollectionViewFlowLayout *delegate;
 }
-
-@property (nonatomic, weak) SHCollectionViewFlowLayout *delegate;
 
 @end
 
@@ -24,7 +23,7 @@
     NSArray *layoutAttributes_t = [super layoutAttributesForElementsInRect:rect];
     NSArray *layoutAttributes = [[NSArray alloc] initWithArray:layoutAttributes_t copyItems:YES];
     
-    self.delegate = (SHCollectionViewFlowLayout *)self.collectionView.delegate;
+    delegate = (SHCollectionViewFlowLayout *)self.collectionView.delegate;
 
     NSMutableArray *temp = [[NSMutableArray alloc] init];
     for (NSUInteger index = 0; index < layoutAttributes.count; index++) {
@@ -65,13 +64,13 @@
     __block CGFloat width = 0.0;
     __block UIEdgeInsets sectionInset = UIEdgeInsetsZero;
     __block CGFloat minimumInteritemSpacing = 0;
-    if([self.delegate respondsToSelector:@selector(collectionView:layout:insetForSectionAtIndex:)]){
-        sectionInset = [self.delegate collectionView:self.collectionView layout:self insetForSectionAtIndex:temp.firstObject.indexPath.section];
+    if([self.collectionView.delegate respondsToSelector:@selector(collectionView:layout:insetForSectionAtIndex:)]){
+        sectionInset = [delegate collectionView:self.collectionView layout:self insetForSectionAtIndex:temp.firstObject.indexPath.section];
     }else{
         sectionInset = self.sectionInset;
     }
     if([self.collectionView.delegate respondsToSelector:@selector(collectionView:layout:minimumInteritemSpacingForSectionAtIndex:)]){
-        minimumInteritemSpacing = [self.delegate collectionView:self.collectionView layout:self minimumInteritemSpacingForSectionAtIndex:temp.firstObject.indexPath.section];
+        minimumInteritemSpacing = [delegate collectionView:self.collectionView layout:self minimumInteritemSpacingForSectionAtIndex:temp.firstObject.indexPath.section];
     }else{
         minimumInteritemSpacing = self.minimumInteritemSpacing;
     }
